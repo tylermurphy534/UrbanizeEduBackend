@@ -3,15 +3,11 @@ const Database = require('../database/Database');
 const util = require('../utils/utils')
 
 router.post('/', async (req, res ) => {
-    if(!req.body.Zip)
-    return res.status( 400 ).send( {msg: 'Please enter a zip code'} );
-    else {
-        let response = await Database.Posts.getPosts(req.body.Zip);
-        if(response == null || response == false){
-            return res.status( 404 ).send( {msg: 'No Posts Found'} );
-        }
-        return res.status(200).send( response );
+    let response = await Database.Posts.getPosts();
+    if(response == null || response == false){
+        return res.status( 404 ).send( {msg: 'No Posts Found'} );
     }
+    return res.status(200).send( response );
 });
 
 router.post('/create', async (req, res ) => {
@@ -24,22 +20,24 @@ router.post('/create', async (req, res ) => {
     if(!auth) {
         return res.status( 401 ).send( {msg: 'Unauthorized'} );
     }
+    if(req.body.post.subject.length < 1){
+        return res.status( 400 ).send( {msg: 'Subject must contain text'});
+    }
+    if(req.body.post.body.length < 1){
+        return res.status( 400 ).send( {msg: 'Body must contain text'});
+    }
+    if(req.body.post.subject.length > 100){
+        return res.status( 400 ).send( {msg: 'Subject must not exceed 100 character limit'});
+    }
+    if(req.body.post.body.length > 500){
+        return res.status( 400 ).send( {msg: 'Body must not exceed 500 character limit'});
+    }
     let status = await Database.Posts.createPost(
         auth,
-        req.body.post.day,
-        req.body.post.month,
-        req.body.post.year,
-        req.body.post.hour,
-        req.body.post.minute,
-        req.body.post.zip,
-        req.body.post.message
+        req.body.post.type,
+        req.body.post.subject,
+        req.body.post.body
     );
-    if(!isNumeric(req.body.post.zip)){
-        return res.status( 400 ).send( {msg: 'Invalid Zip Code'});
-    }
-    if(req.body.post.message.length < 10){
-        return res.status( 400 ).send( {msg: 'Message must be longer than 10 characters'});
-    }
     if(status){
         return res.status( 200 ).send( {msg: 'Created post'});
     } else {

@@ -19,7 +19,7 @@ async function init(){
         const results = await query(" \
             CREATE TABLE IF NOT EXISTS `Sessions` ( \
             `Username` VARCHAR(16) NOT NULL, \
-            `DateCreated` TEXT NOT NULL, \
+            `DateCreated` VARCHAR(100) NOT NULL, \
             `Token` VARCHAR(40) NOT NULL, \
             PRIMARY KEY (`Username`) \
         ); \

@@ -1,4 +1,5 @@
 const Database = require('../database/Database')
+const crypto = require('crypto')
 
 async function authUser(token){
     let res = await Database.Sessions.getSession(token);
@@ -10,16 +11,7 @@ async function authUser(token){
 }
 
 const encrypt = (salt, text) => {
-    const textToChars = (text) => text.split("").map((c) => c.charCodeAt(0));
-    const byteHex = (n) => ("0" + Number(n).toString(16)).substr(-2);
-    const applySaltToChar = (code) => textToChars(salt).reduce((a, b) => a ^ b, code);
-  
-    return text
-      .split("")
-      .map(textToChars)
-      .map(applySaltToChar)
-      .map(byteHex)
-      .join("");
+    return crypto.createHash('md5').update(salt + "" + text).digest('hex');
   };
 
 module.exports = { authUser, encrypt }

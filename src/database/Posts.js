@@ -19,8 +19,8 @@ async function init(){
         const results = await query(" \
             CREATE TABLE IF NOT EXISTS `Posts` ( `PostId` INT NOT NULL AUTO_INCREMENT, `Username` VARCHAR(16) NOT NULL, \
             `Type` VARCHAR(30) NOT NULL, \
-            `Subject` TEXT NOT NULL, \
-            `Body` TEXT NOT NULL, \
+            `Subject` VARCHAR(100) NOT NULL, \
+            `Body` VARCHAR(500) NOT NULL, \
             PRIMARY KEY (`PostId`) ); \
         ", [])
         connection.end();
