@@ -31,7 +31,13 @@ router.post('/update', async (req, res ) => {
         return res.status( 401 ).send( {msg: 'Unauthorized'} );
     }
     let user = await Database.Users.getUser(auth);
-    let status = await Database.Users.updateUser(user.Username,util.encrypt(auth,req.body.Password),req.body.FirstName,req.body.LastName,user.School);
+    let Password = req.body.user.Password;
+    if(Password){
+        Password = util.encrypt(auth, Password);
+    } else {
+        Password = user.Password
+    }
+    let status = await Database.Users.updateUser(auth, Password, req.body.user.FirstName, req.body.user.LastName, user.School);
     if(status){
         return res.status( 200 ).send( {msg: 'Updated Account Information'});
     } else {

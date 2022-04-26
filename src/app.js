@@ -21,6 +21,6 @@ app.use(helmet());
 
 app.use(cors ())
 
-app.use('/api', routes );
+app.use('/api2', routes );
 
 app.listen(PORT, () => console.log( `UrbanizeEdu backend running on Port ${PORT}` ) );

@@ -3,10 +3,36 @@ const Database = require('../database/Database');
 const util = require('../utils/utils')
 
 router.post('/', async (req, res ) => {
+    if(!req.body.token) {
+        return res.status( 400 ).send( {msg: 'Missing token'} );
+    }
+    let auth = await util.authUser(req.body.token);
+    if(!auth) {
+        return res.status( 401 ).send( {msg: 'Unauthorized'} );
+    }
     let response = await Database.Posts.getPosts();
     if(response == null || response == false){
         return res.status( 404 ).send( {msg: 'No Posts Found'} );
     }
+    return res.status(200).send( response );
+});
+
+router.post('/get', async (req, res ) => {
+    if(!req.body.token) {
+        return res.status( 400 ).send( {msg: 'Missing token'} );
+    }
+    let auth = await util.authUser(req.body.token);
+    if(!auth) {
+        return res.status( 401 ).send( {msg: 'Unauthorized'} );
+    }
+    if(!req.body.postId){
+        return res.status( 400 ).send( {msg: 'Missing Post Id'} );
+    }
+    let response = await Database.Posts.getPost(req.body.postId);
+    if(response == null || response == false){
+        return res.status( 404 ).send( {msg: 'Post Does Not Exist'} );
+    }
+    response.Comments = JSON.parse(response.Comments);
     return res.status(200).send( response );
 });
 
@@ -51,7 +77,7 @@ router.post('/delete', async (req, res ) => {
     } else if(!req.body.postId) {
         return res.status( 400 ).send( {msg: 'Missing postId'} );
     } 
-    let auth = util.authUser(req.body.token);
+    let auth = await util.authUser(req.body.token);
     if(!auth) {
         return res.status( 401 ).send( {msg: 'Unauthorized'} );
     }
@@ -70,10 +96,36 @@ router.post('/delete', async (req, res ) => {
     }
 });
 
-function isNumeric(str) {
-    if (typeof str != "string") return false // we only process strings!  
-    return !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
-           !isNaN(parseFloat(str)) // ...and ensure strings of whitespace fail
-  }
+router.post('/comment', async (req, res ) => {
+    if(!req.body.token) {
+        return res.status( 400 ).send( {msg: 'Missing token'} );
+    } else if(!req.body.postId) {
+        return res.status( 400 ).send( {msg: 'Missing postId'} );
+    } 
+    let auth = await util.authUser(req.body.token);
+    if(!auth) {
+        return res.status( 401 ).send( {msg: 'Unauthorized'} );
+    }
+    if(!req.body.name){
+        return res.status( 500 ).send( {msg: 'Internal Server Error'} );
+    }
+    if(!req.body.comment){
+        return res.status( 400 ).send( {msg: 'Missing comment'} );
+    }
+    let post = await Database.Posts.getPost(req.body.postId);
+    if(!post){
+        return res.status( 400 ).send( {msg: 'Invalid Post'} );
+    }
+    let comments = post.Comments;
+    comments = JSON.parse(comments);
+    comments.push(JSON.parse(`{\"${req.body.name}\":\"${req.body.comment}\"}`));
+    comments = JSON.stringify(comments);
+    let status = Database.Posts.updatePost(parseInt(req.body.postId), post.Username, post.Type, post.Subject, post.Body, comments);
+    if(status){
+        return res.status( 200 ).send( {msg: 'Added comment'});
+    } else {
+        return res.status( 500 ).send( {msg: 'Server Error'});
+    }
+});
 
 module.exports = router;

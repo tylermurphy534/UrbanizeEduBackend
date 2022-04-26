@@ -17,10 +17,13 @@ async function init(){
         const query = util.promisify(connection.query).bind(connection);
         connection.connect();
         const results = await query(" \
-            CREATE TABLE IF NOT EXISTS `Posts` ( `PostId` INT NOT NULL AUTO_INCREMENT, `Username` VARCHAR(16) NOT NULL, \
+            CREATE TABLE IF NOT EXISTS `Posts` ( \
+            `PostId` INT NOT NULL AUTO_INCREMENT, \
+            `Username` VARCHAR(16) NOT NULL, \
             `Type` VARCHAR(30) NOT NULL, \
             `Subject` VARCHAR(100) NOT NULL, \
             `Body` VARCHAR(500) NOT NULL, \
+            `Comments` TEXT NOT NULL, \
             PRIMARY KEY (`PostId`) ); \
         ", [])
         connection.end();
@@ -36,7 +39,7 @@ async function getPosts() {
         const connection = getConnection();
         const query = util.promisify(connection.query).bind(connection);
         connection.connect();
-        const results = await query(`SELECT * FROM Posts`, []);
+        const results = await query(`SELECT * FROM Posts`);
         connection.end();
         return results;
     } catch (err){
@@ -53,7 +56,7 @@ async function getPost(postid) {
         const results = await query(`SELECT * FROM Posts WHERE PostId = ?`, [postid]);
         connection.end();
         const row = results[0];
-        return row;00
+        return row;
     } catch (err){
         console.log(err)
         return false;
@@ -65,7 +68,21 @@ async function createPost(username,type,subject,body) {
         const connection = getConnection();
         const query = util.promisify(connection.query).bind(connection);
         connection.connect();
-        const results = await query( `INSERT INTO Posts (Username,Type,Subject,Body) VALUES (?,?,?,?)`, [username,type,subject,body] );
+        const results = await query( `INSERT INTO Posts (Username,Type,Subject,Body,Comments) VALUES (?,?,?,?,?)`, [username,type,subject,body,"[]"] );
+        connection.end();
+        return true;
+    } catch (err){
+        console.log(err)
+        return false;
+    }
+}
+
+async function updatePost(id, username,type,subject,body,comments) {
+    try {
+        const connection = getConnection();
+        const query = util.promisify(connection.query).bind(connection);
+        connection.connect();
+        const results = await query( `REPLACE INTO Posts (PostId, Username,Type,Subject,Body,Comments) VALUES (?,?,?,?,?,?)`, [id, username,type,subject,body,comments] );
         connection.end();
         return true;
     } catch (err){
@@ -86,4 +103,4 @@ async function deletePost(postid) {
     }
 }
 
-module.exports = { init, getPosts, getPost, deletePost, createPost }
+module.exports = { init, getPosts, getPost, deletePost, createPost, updatePost }
